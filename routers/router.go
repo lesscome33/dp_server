@@ -25,6 +25,11 @@ func init() {
 				&controllers.UserController{},
 			),
 		),
+		beego.NSNamespace("/price",
+			beego.NSInclude(
+				&controllers.PriceController{},
+			),
+		),
 	)
 	beego.AddNamespace(ns)
 }
