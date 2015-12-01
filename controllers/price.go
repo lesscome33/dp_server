@@ -37,6 +37,11 @@ func (o *PriceController) Post() {
 // @Failure 403 :objectId is empty
 // @router /:objectId [get]
 func (o *PriceController) Get() {
+	fmt.Println("test")
+	for k, _ := range o.Ctx.Input.Params {
+		fmt.Println("key:%s , value:%s", k, o.Ctx.Input.Params[k])
+	}
+	
 	objectId := o.Ctx.Input.Params[":objectId"]
 	if objectId != "" {
 		ob, err := models.GetOne(objectId)
@@ -55,8 +60,20 @@ func (o *PriceController) Get() {
 // @Failure 403 :objectId is empty
 // @router / [get]
 func (o *PriceController) GetAll() {
-	obs := models.GetAll()
-	o.Data["json"] = obs
+	fmt.Println("test getall");
+	shape := o.GetString("shape")
+	carat := o.GetString("carat")
+	color := o.GetString("color")
+	clarity := o.GetString("clarity")
+	certificate := o.GetString("certificate")
+	proportion := o.GetString("proportion")
+	gotext := o.GetString("go")
+
+	url := fmt.Sprintf("http://data.washingtondiamond.com/store/calc-netsuite.php?shape=%s&carat=%s&color=%s&clarity=%s&certificate=%s&proportion=%s&go=%s", shape, carat, color, clarity, certificate, proportion, gotext)
+	result := ExampleScrape(url)
+
+	//obs := models.GetAll()
+	o.Data["json"] = result
 	o.ServeJson()
 }
 
@@ -94,11 +111,14 @@ func (o *PriceController) Delete() {
 	o.ServeJson()
 }
 
-func ExampleScrape() {
-	doc, err := goquery.NewDocument("http://data.washingtondiamond.com/store/calc-netsuite.php?shape=A&carat=2.0&color=D&clarity=1&certificate=E&proportion=6&go=Calculate+Price")
+func ExampleScrape(url string) string{
+	//doc, err := goquery.NewDocument("http://data.washingtondiamond.com/store/calc-netsuite.php?shape=A&carat=2.0&color=D&clarity=1&certificate=E&proportion=6&go=Calculate+Price")
+	doc, err := goquery.NewDocument(url)
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	var result string;
 
 	doc.Find("td").Each(func(i int, s *goquery.Selection) {
 		htmlText, _ := s.Html()
@@ -106,8 +126,9 @@ func ExampleScrape() {
 		if strings.HasPrefix(htmlText, "$") {
 			fmt.Printf("Review %d: %s\n", i, htmlText)
 			index := strings.Index(htmlText, " ")
-			result := htmlText[:index]
+			result = htmlText[:index]
 			fmt.Println("result: " + result)
 		}
 	})
+	return result;
 }
